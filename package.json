@@ -1,6 +1,6 @@
 {
   "name": "mdptwitterlite",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Temp library for TwitterLite",
   "main": "dist/twitter.js",
   "module": "dist/twitter.m.js",

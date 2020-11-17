@@ -2,3 +2,8 @@
 
 # dependencies
 node_modules
+.DS_Store
+*.log
+dist
+package-lock.json
+.env

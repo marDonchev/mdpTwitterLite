@@ -12,10 +12,7 @@ const createOauthClient = ({ key, secret }) => {
     consumer: { key, secret },
     signature_method: 'HMAC-SHA1',
     hash_function(baseString, key) {
-      return crypto
-        .createHmac('sha1', key)
-        .update(baseString)
-        .digest('base64');
+      return crypto.createHmac('sha1', key).update(baseString).digest('base64');
     },
   });
 
@@ -30,6 +27,7 @@ const defaults = {
   access_token_secret: null,
   bearer_token: null,
   version: '1.1',
+  extension: true,
 };
 
 // Twitter expects POST body parameters to be URL-encoded: https://developer.twitter.com/en/docs/basics/authentication/guides/creating-a-signature
@@ -88,19 +86,22 @@ class Twitter {
     const headers = response.headers; // TODO: see #44
     if (response.ok) {
       // Return empty response on 204 "No content", or Content-Length=0
-      if (response.status === 204 || response.headers.get('content-length') === '0')
+      if (
+        response.status === 204 ||
+        response.headers.get('content-length') === '0'
+      )
         return {
           _headers: headers,
         };
       // Otherwise, parse JSON response
-      return response.json().then(res => {
+      return response.json().then((res) => {
         res._headers = headers; // TODO: this creates an array-like object when it adds _headers to an array response
         return res;
       });
     } else {
       throw {
         _headers: headers,
-        ...await response.json(),
+        ...(await response.json()),
       };
     }
   }
@@ -165,8 +166,7 @@ class Twitter {
     const results = await Fetch(requestData.url, {
       method: 'POST',
       headers: Object.assign({}, baseHeaders, headers),
-    })
-      .then(Twitter._handleResponseTextOrJson);
+    }).then(Twitter._handleResponseTextOrJson);
 
     return results;
   }
@@ -177,16 +177,19 @@ class Twitter {
       method: 'POST',
     };
 
-    let parameters = { oauth_verifier: options.oauth_verifier, oauth_token: options.oauth_token };
-    if (parameters.oauth_verifier && parameters.oauth_token) requestData.url += '?' + querystring.stringify(parameters);
+    let parameters = {
+      oauth_verifier: options.oauth_verifier,
+      oauth_token: options.oauth_token,
+    };
+    if (parameters.oauth_verifier && parameters.oauth_token)
+      requestData.url += '?' + querystring.stringify(parameters);
 
-    const headers = this.client.toHeader( this.client.authorize(requestData) );
+    const headers = this.client.toHeader(this.client.authorize(requestData));
 
     const results = await Fetch(requestData.url, {
       method: 'POST',
       headers: Object.assign({}, baseHeaders, headers),
-    })
-      .then(Twitter._handleResponseTextOrJson);
+    }).then(Twitter._handleResponseTextOrJson);
 
     return results;
   }
@@ -201,7 +204,7 @@ class Twitter {
    */
   _makeRequest(method, resource, parameters) {
     const requestData = {
-      url: `${this.url}/${resource}.json`,
+      url: `${this.url}/${resource}${this.config.extension ? '.json' : ''}`,
       method,
     };
     if (parameters)
@@ -238,8 +241,7 @@ class Twitter {
       parameters,
     );
 
-    return Fetch(requestData.url, { headers })
-      .then(Twitter._handleResponse);
+    return Fetch(requestData.url, { headers }).then(Twitter._handleResponse);
   }
 
   /**
@@ -269,15 +271,14 @@ class Twitter {
       method: 'POST',
       headers: postHeaders,
       body,
-    })
-      .then(Twitter._handleResponse);
+    }).then(Twitter._handleResponse);
   }
 
   /**
-   * Send a PUT request 
+   * Send a PUT request
    * @param {string} resource - endpoint e.g. `direct_messages/welcome_messages/update`
    * @param {object} parameters - required or optional query parameters
-   * @param {object} body - PUT request body 
+   * @param {object} body - PUT request body
    * @returns {Promise<object>} Promise resolving to the response from the Twitter API.
    */
   put(resource, parameters, body) {
@@ -294,8 +295,7 @@ class Twitter {
       method: 'PUT',
       headers: putHeaders,
       body,
-    })
-      .then(Twitter._handleResponse);
+    }).then(Twitter._handleResponse);
   }
 
   /**
@@ -313,7 +313,9 @@ class Twitter {
     // POST the request, in order to accommodate long parameter lists, e.g.
     // up to 5000 ids for statuses/filter - https://developer.twitter.com/en/docs/tweets/filter-realtime/api-reference/post-statuses-filter
     const requestData = {
-      url: `${getUrl('stream')}/${resource}.json`,
+      url: `${getUrl('stream')}/${resource}${
+        this.config.extension ? '.json' : ''
+      }`,
       method: 'POST',
     };
     if (parameters) requestData.data = parameters;
@@ -332,22 +334,22 @@ class Twitter {
     });
 
     request
-      .then(response => {
+      .then((response) => {
         stream.destroy = this.stream.destroy = () => response.body.destroy();
 
         if (response.ok) {
           stream.emit('start', response);
         } else {
-          response._headers = response.headers;  // TODO: see #44 - could omit the line
+          response._headers = response.headers; // TODO: see #44 - could omit the line
           stream.emit('error', response);
         }
 
         response.body
-          .on('data', chunk => stream.parse(chunk))
-          .on('error', error => stream.emit('error', error))  // no point in adding the original response headers
+          .on('data', (chunk) => stream.parse(chunk))
+          .on('error', (error) => stream.emit('error', error)) // no point in adding the original response headers
           .on('end', () => stream.emit('end', response));
       })
-      .catch(error => stream.emit('error', error));
+      .catch((error) => stream.emit('error', error));
 
     return stream;
   }

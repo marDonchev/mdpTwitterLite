@@ -29,8 +29,8 @@
  */
 
 /// <reference types="node" />
-import { EventEmitter } from 'events';
-import * as OAuth from 'oauth-1.0a';
+import { EventEmitter } from "events";
+import * as OAuth from "oauth-1.0a";
 
 export default class Twitter {
   private authType: AuthType;
@@ -50,7 +50,7 @@ export default class Twitter {
   getBearerToken(): Promise<BearerResponse>;
 
   /** The value you specify here will be used as the URL a user is redirected to should they approve your application's access to their account. Set this to oob for out-of-band pin mode. */
-  getRequestToken(twitterCallbackUrl: string | 'oob'): Promise<TokenResponse>;
+  getRequestToken(twitterCallbackUrl: string | "oob"): Promise<TokenResponse>;
 
   getAccessToken(options: AccessTokenOptions): Promise<AccessTokenResponse>;
 
@@ -60,7 +60,7 @@ export default class Twitter {
    * @param {string} resource - the API endpoint
    */
   private _makeRequest(
-    method: 'GET' | 'POST' | 'PUT',
+    method: "GET" | "POST" | "PUT",
     resource: string,
     parameters: object
   ): {
@@ -122,6 +122,8 @@ interface TwitterOptions {
   subdomain?: string;
   /** version "1.1" is the default (change for other subdomains) */
   version?: string;
+  /** version "2" does not use .json for endpoints, defaults to true */
+  extension?: boolean;
   /** consumer key from Twitter. */
   consumer_key: string;
   /** consumer secret from Twitter */
@@ -136,7 +138,7 @@ interface TwitterOptions {
 
 type OauthToken = string;
 type OauthTokenSecret = string;
-type AuthType = 'App' | 'User';
+type AuthType = "App" | "User";
 
 interface KeySecret {
   key: string;
@@ -151,7 +153,7 @@ interface AccessTokenOptions {
 }
 
 interface BearerResponse {
-  token_type: 'bearer';
+  token_type: "bearer";
   access_token: string;
 }
 
@@ -159,9 +161,9 @@ type TokenResponse =
   | {
       oauth_token: OauthToken;
       oauth_token_secret: OauthTokenSecret;
-      oauth_callback_confirmed: 'true';
+      oauth_callback_confirmed: "true";
     }
-  | { oauth_callback_confirmed: 'false' };
+  | { oauth_callback_confirmed: "false" };
 
 interface AccessTokenResponse {
   oauth_token: string;
